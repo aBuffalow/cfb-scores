@@ -48,6 +48,30 @@
       border-bottom: 1px solid var(--border);
     }
 
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .nav a:hover { color: var(--text); border-color: #3a4050; }
+    .nav a.active {
+      color: var(--text);
+      border-color: #4a6fa5;
+      background: #1a2332;
+    }
+
     h1 {
       font-size: 1.25rem;
       font-weight: 600;
@@ -789,6 +813,12 @@
       </div>
     </div>
   </header>
+
+  <nav class="nav" aria-label="Site">
+    <a href="index.html" class="active">Scores</a>
+    <a href="watch.html">Watch Guide</a>
+    <a href="results.html">Results</a>
+  </nav>
 
   <div class="hidden-bar" id="hiddenBar" hidden>
     <span id="hiddenCount">0 games hidden</span>
