@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CFB Watch Guide</title>
+  <link rel="preconnect" href="https://a.espncdn.com" />
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #1a1d24;
+      --card-hover: #22262f;
+      --border: #2a2f3a;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #8ab4f8;
+      --live: #f28b82;
+      --final: #81c995;
+      --upcoming: #8ab4f8;
+      --rank: #fdd663;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 12px 16px 32px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .nav a:hover { color: var(--text); border-color: #3a4050; }
+    .nav a.active {
+      color: var(--text);
+      border-color: #4a6fa5;
+      background: #1a2332;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    button {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button:hover { background: var(--card-hover); }
+    .status-bar { font-size: 0.75rem; color: var(--muted); }
+    .network-section { margin-bottom: 22px; }
+    .network-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+    .network-title .count {
+      background: #2a2f3a;
+      color: var(--text);
+      font-size: 0.7rem;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card.live { border-color: rgba(242, 139, 130, 0.45); }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .status.in { color: var(--live); font-weight: 600; }
+    .status.pre { color: var(--upcoming); font-weight: 600; }
+    .status.starting-soon { color: var(--rank); }
+    .teams { display: flex; flex-direction: column; gap: 6px; }
+    .team-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-wrap {
+      width: 28px; height: 28px;
+      background: #fff;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+    }
+    .logo { width: 24px; height: 24px; object-fit: contain; }
+    .name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rank { color: var(--rank); font-size: 0.7rem; font-weight: 700; margin-right: 4px; }
+    .score {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 1.5em;
+      text-align: right;
+    }
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .cast-link { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .cast-link:hover { text-decoration: underline; }
+    .empty, .error {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .error { background: #3c1f1f; border: 1px solid #5c2b2b; border-radius: 10px; color: #f28b82; }
+    footer { margin-top: 16px; font-size: 0.7rem; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Watch Guide</h1>
+    <div class="toolbar">
+      <button id="refresh" type="button">↻ Refresh</button>
+      <span class="status-bar" id="updated">Loading…</span>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Site">
+    <a href="index.html">Scores</a>
+    <a href="watch.html" class="active">Watch Guide</a>
+    <a href="results.html">Results</a>
+  </nav>
+
+  <div id="content"><div class="empty">Loading TV schedule…</div></div>
+  <footer>Games grouped by TV network · Live games listed first within each network</footer>
+
+  <script>
+    const content = document.getElementById("content");
+    const updatedEl = document.getElementById("updated");
+    const API = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?limit=150&groups=80";
+
+    // Prefer major linear networks first
+    const NETWORK_ORDER = [
+      "ABC", "CBS", "FOX", "NBC", "ESPN", "ESPN2", "ESPNU", "FS1", "FS2",
+      "BTN", "SEC Network", "ACC Network", "Big Ten Network", "CBSSN", "CW",
+      "ESPN+", "SECN+", "ACCNX", "MW+"
+    ];
+
+    function logoUrl(team) {
+      if (team.logo) return team.logo;
+      return `https://a.espncdn.com/i/teamlogos/ncaa/500/${team.id}.png`;
+    }
+
+    function rankHtml(c) {
+      const r = c.curatedRank?.current;
+      return r && r <= 25 ? `<span class="rank">#${r}</span>` : "";
+    }
+
+    function networkNames(comp) {
+      const names = (comp.broadcasts || []).flatMap(b => b.names || []);
+      return names.length ? names : ["TBD / Other"];
+    }
+
+    function primaryNetwork(comp) {
+      const names = networkNames(comp);
+      // Prefer first name that appears in our ordered list
+      for (const n of NETWORK_ORDER) {
+        const hit = names.find(x => x === n || x.toUpperCase() === n.toUpperCase());
+        if (hit) return hit;
+      }
+      return names[0];
+    }
+
+    function formatKick(event, status) {
+      const state = status?.type?.state || "pre";
+      if (state === "in") return status.type.detail || status.type.shortDetail || "Live";
+      if (state === "post") return "Final";
+      const kick = new Date(event.date);
+      if (Number.isNaN(kick.getTime())) return status?.type?.shortDetail || "";
+      const mins = (kick - Date.now()) / 60000;
+      const timeStr = kick.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      if (mins >= 0 && mins <= 30) return { text: `Starting soon · ${timeStr}`, soon: true };
+      const now = new Date();
+      const sameDay = kick.toDateString() === now.toDateString();
+      const dateStr = sameDay ? "Today" : kick.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+      return { text: `${dateStr} · ${timeStr}`, soon: false };
+    }
+
+    function gameLink(event) {
+      const links = event.links || [];
+      const g = links.find(l => (l.rel || []).includes("live") || l.text === "Gamecast");
+      return g?.href || `https://www.espn.com/college-football/game?gameId=${event.id}`;
+    }
+
+    function cardHtml(event) {
+      const comp = event.competitions?.[0];
+      if (!comp) return "";
+      const state = comp.status?.type?.state || "pre";
+      const kick = formatKick(event, comp.status);
+      const statusText = typeof kick === "string" ? kick : kick.text;
+      const soon = typeof kick === "object" && kick.soon;
+      const competitors = [...(comp.competitors || [])].sort((a, b) => {
+        if (a.homeAway === "away") return -1;
+        if (b.homeAway === "away") return 1;
+        return 0;
+      });
+
+      const rows = competitors.map(c => {
+        const team = c.team || {};
+        const score = state === "pre" ? "" : (c.score ?? "–");
+        return `
+          <div class="team-row">
+            <div class="logo-wrap">
+              <img class="logo" src="${logoUrl(team)}" alt="" loading="lazy"
+                   onerror="this.style.display='none'" />
+            </div>
+            <div class="name">${rankHtml(c)}${team.shortDisplayName || team.abbreviation || "?"}</div>
+            <div class="score">${score}</div>
+          </div>`;
+      }).join("");
+
+      return `
+        <article class="card ${state === "in" ? "live" : ""}">
+          <div class="card-top">
+            <span class="status ${state}${soon ? " starting-soon" : ""}">${statusText}</span>
+          </div>
+          <div class="teams">${rows}</div>
+          <div class="footer-row">
+            <span>${event.shortName || ""}</span>
+            <a class="cast-link" href="${gameLink(event)}" target="_blank" rel="noopener">Gamecast →</a>
+          </div>
+        </article>`;
+    }
+
+    function networkSortKey(name) {
+      const i = NETWORK_ORDER.findIndex(n => n.toUpperCase() === name.toUpperCase());
+      return i === -1 ? 500 : i;
+    }
+
+    async function load() {
+      try {
+        const res = await fetch(API);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const events = (data.events || []).filter(e => {
+          const st = e.competitions?.[0]?.status?.type?.state;
+          return st === "pre" || st === "in";
+        });
+
+        // Group by primary network
+        const groups = new Map();
+        for (const e of events) {
+          const comp = e.competitions[0];
+          const net = primaryNetwork(comp);
+          if (!groups.has(net)) groups.set(net, []);
+          groups.get(net).push(e);
+        }
+
+        // Sort games within network: live first, then by start time
+        for (const [, list] of groups) {
+          list.sort((a, b) => {
+            const sa = a.competitions[0]?.status?.type?.state || "pre";
+            const sb = b.competitions[0]?.status?.type?.state || "pre";
+            if (sa === "in" && sb !== "in") return -1;
+            if (sb === "in" && sa !== "in") return 1;
+            return new Date(a.date) - new Date(b.date);
+          });
+        }
+
+        const nets = [...groups.keys()].sort((a, b) => networkSortKey(a) - networkSortKey(b) || a.localeCompare(b));
+
+        if (!nets.length) {
+          content.innerHTML = `<div class="empty">No upcoming or live games with TV info right now.</div>`;
+        } else {
+          content.innerHTML = nets.map(net => {
+            const list = groups.get(net);
+            return `
+              <section class="network-section">
+                <div class="network-title">${net} <span class="count">${list.length}</span></div>
+                <div class="grid">${list.map(cardHtml).join("")}</div>
+              </section>`;
+          }).join("");
+        }
+
+        updatedEl.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })} · ${events.length} games`;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Failed to load. ${err.message}</div>`;
+        updatedEl.textContent = "Error";
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    load();
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>

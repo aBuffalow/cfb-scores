@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CFB Results</title>
+  <link rel="preconnect" href="https://a.espncdn.com" />
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #1a1d24;
+      --card-hover: #22262f;
+      --border: #2a2f3a;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #8ab4f8;
+      --final: #81c995;
+      --rank: #fdd663;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 12px 16px 32px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .nav a:hover { color: var(--text); border-color: #3a4050; }
+    .nav a.active {
+      color: var(--text);
+      border-color: #4a6fa5;
+      background: #1a2332;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    select, button {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button:hover, select:hover { background: var(--card-hover); }
+    .status-bar { font-size: 0.75rem; color: var(--muted); }
+    .day-section { margin-bottom: 22px; }
+    .day-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--final);
+      margin-bottom: 10px;
+    }
+    .day-title .count {
+      background: #2a2f3a;
+      color: var(--text);
+      font-size: 0.7rem;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .status { color: var(--final); font-weight: 600; }
+    .teams { display: flex; flex-direction: column; gap: 6px; }
+    .team-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-wrap {
+      width: 28px; height: 28px;
+      background: #fff;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+    }
+    .logo { width: 24px; height: 24px; object-fit: contain; }
+    .name-wrap { min-width: 0; }
+    .name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rank { color: var(--rank); font-size: 0.7rem; font-weight: 700; margin-right: 4px; }
+    .record { font-size: 0.68rem; color: var(--muted); }
+    .score {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 1.6em;
+      text-align: right;
+    }
+    .score.winner { color: #fff; }
+    .score.loser { color: var(--muted); }
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .cast-link { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .cast-link:hover { text-decoration: underline; }
+    .empty, .error {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .error { background: #3c1f1f; border: 1px solid #5c2b2b; border-radius: 10px; color: #f28b82; }
+    footer { margin-top: 16px; font-size: 0.7rem; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Results</h1>
+    <div class="toolbar">
+      <label style="font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;">
+        Range
+        <select id="range">
+          <option value="3">Last 3 days</option>
+          <option value="7" selected>Last 7 days</option>
+          <option value="14">Last 14 days</option>
+        </select>
+      </label>
+      <button id="refresh" type="button">↻ Refresh</button>
+      <span class="status-bar" id="updated">Loading…</span>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Site">
+    <a href="index.html">Scores</a>
+    <a href="watch.html">Watch Guide</a>
+    <a href="results.html" class="active">Results</a>
+  </nav>
+
+  <div id="content"><div class="empty">Loading final scores…</div></div>
+  <footer>Final FBS games only · Click Box Score for details</footer>
+
+  <script>
+    const content = document.getElementById("content");
+    const updatedEl = document.getElementById("updated");
+    const rangeSelect = document.getElementById("range");
+
+    function yyyymmdd(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}${m}${day}`;
+    }
+
+    function dateKeys(days) {
+      const keys = [];
+      const now = new Date();
+      for (let i = 0; i < days; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        keys.push(yyyymmdd(d));
+      }
+      return keys;
+    }
+
+    function logoUrl(team) {
+      if (team.logo) return team.logo;
+      return `https://a.espncdn.com/i/teamlogos/ncaa/500/${team.id}.png`;
+    }
+
+    function rankHtml(c) {
+      const r = c.curatedRank?.current;
+      return r && r <= 25 ? `<span class="rank">#${r}</span>` : "";
+    }
+
+    function overallRecord(c) {
+      const recs = c.records || [];
+      const overall = recs.find(r => r.type === "total") || recs.find(r => r.name === "overall");
+      return overall?.summary || "";
+    }
+
+    function boxLink(event) {
+      const links = event.links || [];
+      const box = links.find(l => (l.rel || []).includes("boxscore") || l.text === "Box Score");
+      return box?.href || `https://www.espn.com/college-football/boxscore/_/gameId/${event.id}`;
+    }
+
+    function networkText(comp) {
+      const names = (comp.broadcasts || []).flatMap(b => b.names || []);
+      return names[0] || "";
+    }
+
+    function cardHtml(event) {
+      const comp = event.competitions?.[0];
+      if (!comp) return "";
+      const competitors = [...(comp.competitors || [])].sort((a, b) => {
+        if (a.homeAway === "away") return -1;
+        if (b.homeAway === "away") return 1;
+        return 0;
+      });
+
+      const rows = competitors.map(c => {
+        const team = c.team || {};
+        const rec = overallRecord(c);
+        const scoreCls = c.winner === true ? "winner" : c.winner === false ? "loser" : "";
+        return `
+          <div class="team-row">
+            <div class="logo-wrap">
+              <img class="logo" src="${logoUrl(team)}" alt="" loading="lazy"
+                   onerror="this.style.display='none'" />
+            </div>
+            <div class="name-wrap">
+              <div class="name">${rankHtml(c)}${team.shortDisplayName || team.abbreviation || "?"}</div>
+              ${rec ? `<div class="record">${rec}</div>` : ""}
+            </div>
+            <div class="score ${scoreCls}">${c.score ?? "–"}</div>
+          </div>`;
+      }).join("");
+
+      return `
+        <article class="card">
+          <div class="card-top">
+            <span class="status">Final</span>
+            <span>${networkText(comp)}</span>
+          </div>
+          <div class="teams">${rows}</div>
+          <div class="footer-row">
+            <span>${event.shortName || ""}</span>
+            <a class="cast-link" href="${boxLink(event)}" target="_blank" rel="noopener">Box Score →</a>
+          </div>
+        </article>`;
+    }
+
+    function dayLabel(yyyymmddStr) {
+      const y = +yyyymmddStr.slice(0, 4);
+      const m = +yyyymmddStr.slice(4, 6) - 1;
+      const d = +yyyymmddStr.slice(6, 8);
+      const dt = new Date(y, m, d);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      if (dt.toDateString() === today.toDateString()) return "Today";
+      if (dt.toDateString() === yesterday.toDateString()) return "Yesterday";
+      return dt.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+    }
+
+    async function fetchDay(dateKey) {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?limit=150&groups=80&dates=${dateKey}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return (data.events || []).filter(e => e.competitions?.[0]?.status?.type?.state === "post");
+    }
+
+    async function load() {
+      const days = parseInt(rangeSelect.value, 10) || 7;
+      const keys = dateKeys(days);
+      content.innerHTML = `<div class="empty">Loading final scores…</div>`;
+
+      try {
+        const results = await Promise.all(keys.map(async key => {
+          try {
+            const events = await fetchDay(key);
+            return { key, events };
+          } catch {
+            return { key, events: [] };
+          }
+        }));
+
+        // Only show days that have finals
+        const sections = results.filter(r => r.events.length > 0);
+        let total = 0;
+
+        if (!sections.length) {
+          content.innerHTML = `<div class="empty">No final FBS games in this range.</div>`;
+        } else {
+          content.innerHTML = sections.map(({ key, events }) => {
+            total += events.length;
+            // Most recent games first within the day
+            events.sort((a, b) => new Date(b.date) - new Date(a.date));
+            return `
+              <section class="day-section">
+                <div class="day-title">${dayLabel(key)} <span class="count">${events.length}</span></div>
+                <div class="grid">${events.map(cardHtml).join("")}</div>
+              </section>`;
+          }).join("");
+        }
+
+        updatedEl.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })} · ${total} finals`;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Failed to load. ${err.message}</div>`;
+        updatedEl.textContent = "Error";
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    rangeSelect.addEventListener("change", load);
+    load();
+  </script>
+</body>
+</html>
