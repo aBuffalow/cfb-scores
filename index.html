@@ -799,6 +799,91 @@
       border-color: #4a5160;
     }
 
+    /* —— Compact mode —— */
+    body.compact .grid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    body.compact .card {
+      padding: 7px 9px 8px;
+      gap: 4px;
+      border-radius: 8px;
+    }
+    body.compact .card-header {
+      font-size: 0.65rem;
+      margin-bottom: 0;
+    }
+    body.compact .teams {
+      gap: 4px;
+    }
+    body.compact .team-row {
+      grid-template-columns: 24px 1fr auto;
+      gap: 6px;
+    }
+    body.compact .logo-wrap {
+      width: 24px;
+      height: 24px;
+      padding: 1px;
+      border-radius: 4px;
+    }
+    body.compact .logo {
+      width: 20px;
+      height: 20px;
+    }
+    body.compact .name {
+      font-size: 0.8rem;
+    }
+    body.compact .rank {
+      font-size: 0.62rem;
+    }
+    body.compact .record {
+      display: none;
+    }
+    body.compact .score {
+      font-size: 1rem;
+    }
+    body.compact .situation {
+      font-size: 0.68rem;
+      padding: 2px 6px;
+    }
+    body.compact .last-play {
+      display: none;
+    }
+    body.compact .mini-field {
+      margin-top: 0;
+      padding: 2px 0 0;
+    }
+    body.compact .mini-field-label {
+      font-size: 0.58rem;
+      margin-bottom: 2px;
+    }
+    body.compact .field-track {
+      height: 12px;
+    }
+    body.compact .footer-row {
+      font-size: 0.65rem;
+      margin-top: 0;
+    }
+    body.compact .expanded-panel {
+      display: none !important;
+    }
+    body.compact .section-title {
+      font-size: 0.72rem;
+      margin-bottom: 8px;
+    }
+    body.compact .hide-btn {
+      width: 18px;
+      height: 18px;
+      font-size: 0.75rem;
+      top: 4px;
+      right: 4px;
+    }
+    body.compact .grid:has(> .card:only-child),
+    body.compact .grid:has(> .card:nth-child(1):nth-last-child(2)) {
+      max-width: none;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+
     footer {
       margin-top: 12px;
       font-size: 0.7rem;
@@ -820,6 +905,7 @@
   <header>
     <h1>College Football Scores</h1>
     <div class="controls">
+      <button id="compactToggle" title="Tighter cards to see more games at once">Compact</button>
       <button id="watchableToggle" title="Sort live games by how watchable they are (close, ranked, late)">Watchable sort</button>
       <button id="refresh" title="Refresh now">↻ Refresh</button>
       <div class="status-bar">
@@ -865,6 +951,8 @@
     const cardEls = new Map();
     let forceFullRender = true;
     let watchableSortOn = localStorage.getItem("cfb-watchable-sort") === "1";
+    let compactOn = localStorage.getItem("cfb-compact") === "1";
+    if (compactOn) document.body.classList.add("compact");
 
     // Temporarily hidden games (session only — avoid spoilers on delayed streams)
     const HIDDEN_KEY = "cfb-hidden-games";
@@ -1934,6 +2022,23 @@
       localStorage.setItem("cfb-watchable-sort", watchableSortOn ? "1" : "0");
       syncWatchableToggle();
       fetchScores();
+    });
+
+    const compactToggle = document.getElementById("compactToggle");
+    function syncCompactToggle() {
+      if (!compactToggle) return;
+      document.body.classList.toggle("compact", compactOn);
+      compactToggle.classList.toggle("toggle-on", compactOn);
+      compactToggle.textContent = compactOn ? "Compact · On" : "Compact";
+      compactToggle.title = compactOn
+        ? "Compact mode is ON — denser cards"
+        : "Tighter cards to see more games at once";
+    }
+    syncCompactToggle();
+    compactToggle.addEventListener("click", () => {
+      compactOn = !compactOn;
+      localStorage.setItem("cfb-compact", compactOn ? "1" : "0");
+      syncCompactToggle();
     });
 
     document.getElementById("showAllHidden").addEventListener("click", () => {
