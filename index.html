@@ -907,6 +907,7 @@
     <div class="controls">
       <button id="compactToggle" title="Tighter cards to see more games at once">Compact</button>
       <button id="watchableToggle" title="Sort live games by how watchable they are (close, ranked, late)">Watchable sort</button>
+      <button id="wakeToggle" title="Keep the screen on (prevent dim / sleep)">Stay awake</button>
       <button id="refresh" title="Refresh now">↻ Refresh</button>
       <div class="status-bar">
         <span class="dot" id="liveDot"></span>
@@ -2041,6 +2042,82 @@
       syncCompactToggle();
     });
 
+    // Screen Wake Lock — keep display on for tabletop viewing
+    const wakeToggle = document.getElementById("wakeToggle");
+    let wakeLock = null;
+    let wakeWanted = localStorage.getItem("cfb-wake-lock") === "1";
+
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) {
+        if (wakeToggle) {
+          wakeToggle.disabled = true;
+          wakeToggle.textContent = "Stay awake N/A";
+          wakeToggle.title = "Screen Wake Lock is not supported in this browser";
+        }
+        return false;
+      }
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => {
+          // System may release when tab is hidden; we re-request on visible if still wanted
+          if (wakeToggle && wakeWanted) syncWakeToggle();
+        });
+        return true;
+      } catch (err) {
+        console.warn("Wake Lock failed:", err);
+        wakeLock = null;
+        return false;
+      }
+    }
+
+    async function releaseWakeLock() {
+      try {
+        if (wakeLock) await wakeLock.release();
+      } catch (_) {}
+      wakeLock = null;
+    }
+
+    async function syncWakeToggle() {
+      if (!wakeToggle) return;
+      const active = !!(wakeLock && wakeWanted);
+      wakeToggle.classList.toggle("toggle-on", wakeWanted && active);
+      if (!("wakeLock" in navigator)) {
+        wakeToggle.disabled = true;
+        wakeToggle.textContent = "Stay awake N/A";
+        wakeToggle.title = "Screen Wake Lock is not supported in this browser";
+        return;
+      }
+      if (wakeWanted) {
+        if (!wakeLock) {
+          const ok = await requestWakeLock();
+          wakeToggle.classList.toggle("toggle-on", ok);
+          wakeToggle.textContent = ok ? "Stay awake · On" : "Stay awake · Failed";
+          wakeToggle.title = ok
+            ? "Screen will stay on while this tab is visible"
+            : "Could not keep screen on (permission or power settings)";
+        } else {
+          wakeToggle.classList.add("toggle-on");
+          wakeToggle.textContent = "Stay awake · On";
+          wakeToggle.title = "Screen will stay on while this tab is visible";
+        }
+      } else {
+        await releaseWakeLock();
+        wakeToggle.classList.remove("toggle-on");
+        wakeToggle.textContent = "Stay awake";
+        wakeToggle.title = "Keep the screen on (prevent dim / sleep)";
+      }
+    }
+
+    if (wakeToggle) {
+      wakeToggle.addEventListener("click", async () => {
+        wakeWanted = !wakeWanted;
+        localStorage.setItem("cfb-wake-lock", wakeWanted ? "1" : "0");
+        await syncWakeToggle();
+      });
+      // Restore preference on load
+      syncWakeToggle();
+    }
+
     document.getElementById("showAllHidden").addEventListener("click", () => {
       showAllHidden();
     });
@@ -2066,6 +2143,11 @@
       } else {
         fetchScores();
         startAutoRefresh();
+        // Wake locks are released when the tab is hidden; re-request if still wanted
+        if (typeof wakeWanted !== "undefined" && wakeWanted) {
+          wakeLock = null;
+          syncWakeToggle();
+        }
       }
     });
   </script>
